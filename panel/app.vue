@@ -13,12 +13,24 @@
       </v-btn>
     </v-toolbar>
   </v-card>
-  <div>
-    <div id="timeline-container" ref="timelineContainer" style="height: 60dvh;">
-    </div>
-    <json-tree-view class="scrollable" style="height: 30dvh;" :json="traceValue">
-    </json-tree-view>
-  </div>
+  <v-container class="ma-0 pa-0" style="max-width: 100%;">
+    <v-row class="ma-0 pa-0">
+      <v-col :cols="10">
+        <div class="my-2" id="timeline-container" ref="timelineContainer" style="height: 60dvh;">
+        </div>
+        <json-tree-view class="scrollable elevation-2" style="height: 30dvh;" :json="traceValue">
+        </json-tree-view>
+      </v-col>
+      <v-col :cols="2">
+        <v-list class="elevation-2" style="height: 100%;">
+          <v-list-item v-for="item in parentTraces" :key="item.id" :value="item" @click="parentSelected(item)">
+            <v-list-item-title v-text="item.text"></v-list-item-title>
+            <v-list-item-subtitle>{{ item.time }}</v-list-item-subtitle>
+          </v-list-item>
+        </v-list>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup>
@@ -31,6 +43,7 @@ import 'json-tree-view-vue3/dist/style.css'
 var timeline = ref(null)
 const timelineContainer = ref(null)
 const traceValue = ref("{}")
+const parentTraces = ref([])
 
 // Create a DataSet (allows two way data-binding)
 var items = new DataSet([]);
@@ -59,8 +72,10 @@ onMounted(() => {
 
 function refresh() {
   $fetch('http://localhost:8866/api/get_traces').then(data => {
-    console.debug(data)
+    //console.debug(data)
     items.clear()
+    traceValue.value = "{}"
+    parentTraces.value = []
     var end = 0
     var start = 4000000000000
     data.forEach(trace => {
@@ -72,7 +87,12 @@ function refresh() {
       item.group = 10
       item.trace = trace
       item.level = item.trace.level
+      item.id = trace.span_id
       items.add(item)
+      if (trace.parent_id == 0) {
+        const start = new Date(item.start)
+        parentTraces.value.push({id: item.id, text: item.name, time: start.toISOString(start)})
+      }
       if (item.start < start) {
         start = item.start
       }
@@ -80,18 +100,19 @@ function refresh() {
         end = item.end
       }
     });
-    console.debug(data, start, end)
+    //console.debug(data, start, end)
     timeline.setOptions({"start": start, "end": end})
   })
 }
 
 async function clear() {
   await $fetch('http://localhost:8866/api/clear', { method: 'POST'})
+  traceValue.value = "{}"
   items.clear()
 }
 
 function onSelect(properties) {
-  console.debug(properties)
+  //console.debug(properties)
   if (properties.items.length == 0) {
     traceValue.value = "{}"
     return
@@ -103,6 +124,14 @@ function onSelect(properties) {
 function customOrder(a, b) {
   // order by id
   return a.level - b.level
+}
+
+function parentSelected(trace){
+  //console.debug(trace.id)
+  traceValue.value = "{}"
+  const item = items.get(trace.id)
+  timeline.setOptions({"start": item.start, "end": item.end})
+
 }
 
 </script>

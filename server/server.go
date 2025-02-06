@@ -136,7 +136,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 func AddTrace(ctx context.Context, b []byte) error {
-	//fmt.Println(string(b))
+	fmt.Println(string(b))
 	var tracess [][]types.Trace
 	err := json.Unmarshal(b, &tracess)
 	if err != nil {
