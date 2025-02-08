@@ -59,11 +59,10 @@ func NewServer(config Config) (*Server, error) {
 		c.Next()
 	})
 
-	apiRouter.Any("info", func(ctx *gin.Context) { ctx.Status(http.StatusOK) })
-	apiRouter.Any("telemetry/proxy/api/v2/apmtelemetry", func(ctx *gin.Context) { ctx.Status(http.StatusOK) })
-	apiRouter.Any("v0.7/config", func(ctx *gin.Context) { ctx.Status(http.StatusOK) })
-	apiRouter.Any("v0.4/traces", func(ctx *gin.Context) {
-		fmt.Println("traces")
+	apiRouter.GET("info", func(ctx *gin.Context) { ctx.Status(http.StatusOK) })
+	apiRouter.POST("telemetry/proxy/api/v2/apmtelemetry", func(ctx *gin.Context) { ctx.Status(http.StatusOK) })
+	apiRouter.GET("v0.7/config", func(ctx *gin.Context) { ctx.Status(http.StatusOK) })
+	apiRouter.POST("v0.4/traces", func(ctx *gin.Context) {
 		body, err := io.ReadAll(ctx.Request.Body)
 		if err != nil {
 			fmt.Println(err.Error())
@@ -78,7 +77,6 @@ func NewServer(config Config) (*Server, error) {
 				ctx.AbortWithError(http.StatusInternalServerError, err)
 				return
 			}
-			fmt.Println(b.String())
 			err = AddTrace(ctx, b.Bytes())
 			if err != nil {
 				fmt.Println(err.Error())
@@ -136,7 +134,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 func AddTrace(ctx context.Context, b []byte) error {
-	fmt.Println(string(b))
 	var tracess [][]types.Trace
 	err := json.Unmarshal(b, &tracess)
 	if err != nil {

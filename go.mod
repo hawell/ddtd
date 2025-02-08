@@ -3,6 +3,7 @@ module ddtd
 go 1.22.0
 
 require (
+	github.com/DataDog/dd-trace-go/v2 v2.0.0-rc.2
 	github.com/gin-gonic/gin v1.9.1
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/tinylib/msgp v1.2.2

@@ -108,6 +108,7 @@ function refresh() {
 async function clear() {
   await $fetch('http://localhost:8866/api/clear', { method: 'POST'})
   traceValue.value = "{}"
+  parentTraces.value = []
   items.clear()
 }
 
